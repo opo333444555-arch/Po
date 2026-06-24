@@ -16,6 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageUpload = document.getElementById('image-upload');
     const imagePreviewContainer = document.getElementById('image-preview-container');
 
+    // DOM Elements - View Summary Modal
+    const viewSummaryModal = document.getElementById('view-summary-modal');
+    const closeViewSummaryBtn = document.getElementById('close-view-summary');
+    const cancelViewSummaryBtn = document.getElementById('cancel-view-summary');
+    const viewSummaryTitle = document.getElementById('view-summary-title');
+    const savedSummariesList = document.getElementById('saved-summaries-list');
+
     // DOM Elements - Add Subject Modal
     const addSubjectBtn = document.getElementById('btn-add-subject');
     const addSubjectModal = document.getElementById('add-subject-modal');
@@ -30,6 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const targetClass = '5/1'; // Default class as requested
     let mockData = getMockDatabase();
     let selectedIcon = 'fa-book';
+    
+    // Store saved summaries in memory (Mocking a database)
+    // Format: { "Lesson Title": [{ time: "...", text: "...", images: ["..."] }] }
+    let savedSummaries = {};
+    let currentLessonTitleForSummary = '';
 
     // ==========================================
     // 1. Sidebar & Navigation Logic
@@ -106,6 +118,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const delay = index * 0.1;
 
+            // Check if there are saved summaries
+            const summariesCount = savedSummaries[lesson.title] ? savedSummaries[lesson.title].length : 0;
+            const viewSummaryBtnHtml = summariesCount > 0 
+                ? `<button class="btn-view-summary" data-title="${lesson.title}">
+                     <i class="fa-solid fa-clock-rotate-left"></i> ดูที่จดสรุป (${summariesCount})
+                   </button>`
+                : '';
+
             html += `
                 <div class="lesson-card" style="animation-delay: ${delay}s">
                     <h3 class="lesson-title">
@@ -118,9 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span><i class="fa-solid fa-cloud"></i> ซิงค์จากคลาวด์แล้ว</span>
                     </div>
                     <p class="lesson-desc">${lesson.description}</p>
-                    <button class="btn-start btn-summary" data-title="${lesson.title}">
-                        <i class="fa-solid fa-pen-to-square"></i> สรุปสอบ
-                    </button>
+                    
+                    <div class="lesson-actions">
+                        <button class="btn-start btn-summary" data-title="${lesson.title}">
+                            <i class="fa-solid fa-pen-to-square"></i> สรุปสอบ
+                        </button>
+                        ${viewSummaryBtnHtml}
+                    </div>
                 </div>
             `;
         });
@@ -134,12 +158,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 openSummaryModal(title);
             });
         });
+
+        // Add event listeners for "ดูที่จดสรุป" buttons
+        document.querySelectorAll('.btn-view-summary').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const title = e.currentTarget.getAttribute('data-title');
+                openViewSummaryModal(title);
+            });
+        });
     };
 
     // ==========================================
     // 3. Summary Modal Logic
     // ==========================================
     const openSummaryModal = (title) => {
+        currentLessonTitleForSummary = title;
         modalLessonTitle.innerHTML = `<i class="fa-solid fa-book"></i> สรุปเนื้อหา: ${title}`;
         document.getElementById('summary-text').value = '';
         imagePreviewContainer.innerHTML = ''; // clear old images
@@ -154,12 +187,40 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelSummaryBtn.addEventListener('click', closeSummaryModal);
     
     saveSummaryBtn.addEventListener('click', () => {
-        // In a real app, send data to Firebase here
-        alert('บันทึกสรุปเรียบร้อยแล้ว! (จำลองการบันทึก)');
+        const text = document.getElementById('summary-text').value.trim();
+        const images = Array.from(imagePreviewContainer.querySelectorAll('img')).map(img => img.src);
+
+        if (!text && images.length === 0) {
+            alert('กรุณาพิมพ์สรุปหรือเพิ่มรูปภาพก่อนบันทึก');
+            return;
+        }
+
+        // Get current timestamp formatted
+        const now = new Date();
+        const timeString = now.toLocaleString('th-TH', { 
+            year: 'numeric', month: 'long', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+
+        // Save to our mock database
+        if (!savedSummaries[currentLessonTitleForSummary]) {
+            savedSummaries[currentLessonTitleForSummary] = [];
+        }
+
+        savedSummaries[currentLessonTitleForSummary].unshift({
+            time: timeString,
+            text: text,
+            images: images
+        });
+
+        alert('บันทึกสรุปเรียบร้อยแล้ว!');
         closeSummaryModal();
+        
+        // Refresh content to show the "ดูที่จดสรุป" button
+        fetchContentFromCloud(currentSubject, targetClass);
     });
 
-    // Image Upload Preview (Mock)
+    // Image Upload Preview
     imageUpload.addEventListener('change', (e) => {
         if (e.target.files && e.target.files[0]) {
             const reader = new FileReader();
@@ -174,7 +235,50 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================
-    // 4. Add Subject Modal Logic
+    // 4. View Summaries Modal Logic
+    // ==========================================
+    const openViewSummaryModal = (title) => {
+        viewSummaryTitle.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> ประวัติสรุป: ${title}`;
+        
+        const summaries = savedSummaries[title] || [];
+        let html = '';
+
+        if (summaries.length === 0) {
+            html = '<p style="text-align:center; color:#64748b;">ยังไม่มีประวัติการจดสรุป</p>';
+        } else {
+            summaries.forEach(sum => {
+                let imagesHtml = '';
+                if (sum.images && sum.images.length > 0) {
+                    imagesHtml = '<div class="summary-images">';
+                    sum.images.forEach(imgSrc => {
+                        imagesHtml += `<img src="${imgSrc}" class="summary-img">`;
+                    });
+                    imagesHtml += '</div>';
+                }
+
+                html += `
+                    <div class="summary-item">
+                        <div class="summary-time"><i class="fa-regular fa-calendar"></i> บันทึกเมื่อ: ${sum.time}</div>
+                        ${sum.text ? `<div class="summary-content-text">${sum.text}</div>` : ''}
+                        ${imagesHtml}
+                    </div>
+                `;
+            });
+        }
+
+        savedSummariesList.innerHTML = html;
+        viewSummaryModal.classList.add('active');
+    };
+
+    const closeViewSummaryModal = () => {
+        viewSummaryModal.classList.remove('active');
+    };
+
+    closeViewSummaryBtn.addEventListener('click', closeViewSummaryModal);
+    cancelViewSummaryBtn.addEventListener('click', closeViewSummaryModal);
+
+    // ==========================================
+    // 5. Add Subject Modal Logic
     // ==========================================
     const openAddSubjectModal = () => {
         newSubjectNameInput.value = '';
