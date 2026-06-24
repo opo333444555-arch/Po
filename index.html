@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom App - เรียนคลาวด์</title>
+    <!-- Google Fonts: Noto Sans Thai -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle Menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <h1 class="app-title">
+                <i class="fa-solid fa-cloud"></i>
+                CloudEdu
+            </h1>
+        </div>
+        <div class="navbar-right">
+            <div class="user-profile">
+                <span class="class-badge">ชั้น 5/1</span>
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- App Container (Sidebar + Main Content) -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <ul class="nav-links">
+                <li class="nav-item active" data-subject="physics">
+                    <a href="#">
+                        <i class="fa-solid fa-atom"></i>
+                        <span class="link-text">ฟิสิกส์</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-subject="chemistry">
+                    <a href="#">
+                        <i class="fa-solid fa-flask"></i>
+                        <span class="link-text">เคมี</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-subject="biology">
+                    <a href="#">
+                        <i class="fa-solid fa-dna"></i>
+                        <span class="link-text">ชีววิทยา</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-subject="math">
+                    <a href="#">
+                        <i class="fa-solid fa-calculator"></i>
+                        <span class="link-text">คณิตศาสตร์</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <button class="btn-add-subject" id="btn-add-subject">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="link-text">เพิ่มวิชา</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="main-content">
+            <div class="content-header">
+                <h2 id="subject-title">ฟิสิกส์</h2>
+                <div class="breadcrumb">ชั้น 5/1 / <span id="breadcrumb-subject">ฟิสิกส์</span></div>
+            </div>
+            
+            <div class="content-body" id="content-display">
+                <!-- Loading State -->
+                <div class="loader-container">
+                    <div class="loader"></div>
+                    <p>กำลังโหลดเนื้อหาจาก Cloud...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Summary Modal -->
+    <div class="modal-overlay" id="summary-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-lesson-title"><i class="fa-solid fa-book"></i> สรุปสอบ</h3>
+                <button class="close-modal" id="close-summary"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="summary-editor">
+                    <textarea id="summary-text" placeholder="พิมพ์สรุปเนื้อหาของคุณที่นี่..."></textarea>
+                    
+                    <div class="image-upload-area">
+                        <label for="image-upload" class="upload-label">
+                            <i class="fa-solid fa-image"></i> เพิ่มรูปภาพประกอบ
+                        </label>
+                        <input type="file" id="image-upload" accept="image/*" hidden>
+                        <div id="image-preview-container" class="image-preview-container">
+                            <!-- Image previews will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancel-summary">ปิด</button>
+                <button class="btn-primary" id="save-summary">บันทึกสรุป</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Subject Modal -->
+    <div class="modal-overlay" id="add-subject-modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-plus-circle"></i> เพิ่มวิชาเรียน</h3>
+                <button class="close-modal" id="close-add-subject"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-subject-name">ชื่อวิชา</label>
+                    <input type="text" id="new-subject-name" class="form-input" placeholder="เช่น ภาษาไทย, สังคมศึกษา">
+                </div>
+                <div class="form-group">
+                    <label>เลือกไอคอน</label>
+                    <div class="icon-selector" id="icon-selector">
+                        <div class="icon-option active" data-icon="fa-book"><i class="fa-solid fa-book"></i></div>
+                        <div class="icon-option" data-icon="fa-language"><i class="fa-solid fa-language"></i></div>
+                        <div class="icon-option" data-icon="fa-earth-asia"><i class="fa-solid fa-earth-asia"></i></div>
+                        <div class="icon-option" data-icon="fa-computer"><i class="fa-solid fa-computer"></i></div>
+                        <div class="icon-option" data-icon="fa-music"><i class="fa-solid fa-music"></i></div>
+                        <div class="icon-option" data-icon="fa-palette"><i class="fa-solid fa-palette"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancel-add-subject">ยกเลิก</button>
+                <button class="btn-primary" id="confirm-add-subject">เพิ่มวิชา</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Script (Placeholder for future) -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script> -->
+    <script src="app.js"></script>
+</body>
+</html>
